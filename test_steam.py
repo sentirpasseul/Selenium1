@@ -16,6 +16,7 @@ def browser():
     yield browser
     browser.quit()
 
+
 class TestSteamPage:
     @pytest.mark.smoke
     def test_load_page(self, browser):
@@ -35,7 +36,8 @@ class TestSteamPage:
 
     @pytest.mark.smoke
     def test_login(self, browser):
-        input_login = browser.find_element(By.XPATH, "//div[contains(text(), 'Войдите')]//following-sibling::input[@type='text']")
+        input_login = browser.find_element(By.XPATH,
+                                           "//div[contains(text(), 'Войдите')]//following-sibling::input[@type='text']")
         input_login.is_displayed()
         input_login.send_keys(TEST_LOGIN)
 
