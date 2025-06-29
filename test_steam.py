@@ -5,50 +5,40 @@ from selenium.webdriver.common.by import By
 import selenium, pytest
 
 LINK = 'https://store.steampowered.com/'
-TEST_LOGIN = 'test'
-TEST_PASSWORD = 'test'
 
 
-@pytest.fixture(scope='class')
-def browser():
-    browser = webdriver.Chrome()
-    browser.implicitly_wait(5)
-    yield browser
-    browser.quit()
-
-
+@pytest.mark.usefixtures('browser')
 class TestSteamPage:
-    @pytest.mark.smoke
+    TIMEOUT = 5
+
+    LOGIN_BUTTON = (By.XPATH, "//a[text()='войти']")
+    LOGIN_TEXT = (By.XPATH, "//div[text()='Вход']")
+    LOGIN_USERNAME_INPUT = (By.XPATH,
+                            "//div[contains(text(), 'Войдите')]//following-sibling::input[@type='text']")
+    LOGIN_PASSWORD_INPUT = (By.XPATH,
+                            "//div[contains(text(), 'Пароль')]//following-sibling::input[@type='password']")
+    LOGIN_SUBMIT_BUTTON = (By.XPATH, "//button[@type='submit']")
+    #LOGIN_ERROR_MESSAGE_DIV = (By.XPATH, "//div[contains(text(), 'проверьте')]")
+    LOGIN_ERROR_MESSAGE_DIV = (By.XPATH, "//div[@*='auth_message_incorrectcode']")
+    STORE_NAV_DIV = (By.XPATH, "//div[@class='store_nav']")
+
     def test_load_page(self, browser):
         browser.get(LINK)
-        WebDriverWait(browser, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//h2[contains(text(), 'Популярное')]"))
-        )
+        WebDriverWait(browser, self.TIMEOUT).until(EC.visibility_of_element_located(self.STORE_NAV_DIV))
 
-    @pytest.mark.smoke
     def test_click_login(self, browser):
-        browser.find_element(By.XPATH, "//a[text()='войти']").click()
+        WebDriverWait(browser, self.TIMEOUT).until(EC.element_to_be_clickable(self.LOGIN_BUTTON)).click()
 
-    @pytest.mark.smoke
     def test_load_login_page(self, browser):
-        WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.XPATH, "//div[text()='Вход']")))
-        browser.find_element(By.XPATH, "//div[text()='Вход']").is_displayed()
+        WebDriverWait(browser, self.TIMEOUT).until(EC.visibility_of_element_located(self.LOGIN_TEXT))
 
-    @pytest.mark.smoke
     def test_login(self, browser):
-        input_login = browser.find_element(By.XPATH,
-                                           "//div[contains(text(), 'Войдите')]//following-sibling::input[@type='text']")
-        input_login.is_displayed()
-        input_login.send_keys(TEST_LOGIN)
+        WebDriverWait(browser, self.TIMEOUT).until(
+            EC.visibility_of_element_located(self.LOGIN_USERNAME_INPUT)).send_keys('TEST_LOGIN')
+        WebDriverWait(browser, self.TIMEOUT).until(
+            EC.visibility_of_element_located(self.LOGIN_PASSWORD_INPUT)).send_keys('TEST_PASSWORD')
+        WebDriverWait(browser, self.TIMEOUT).until(
+            EC.element_to_be_clickable(self.LOGIN_SUBMIT_BUTTON)).submit()
+        WebDriverWait(browser, self.TIMEOUT).until(
+            EC.presence_of_element_located(self.LOGIN_ERROR_MESSAGE_DIV))
 
-        input_password = browser.find_element(By.XPATH,
-                                              "//div[contains(text(), 'Пароль')]//following-sibling::input[@type='password']")
-        input_password.is_displayed()
-        input_password.send_keys(TEST_PASSWORD)
-
-        button_login = browser.find_element(By.XPATH, "//button[@type='submit']")
-        button_login.is_enabled()
-        button_login.submit()
-
-        text_error_login = browser.find_element(By.XPATH, "//div[contains(text(), 'проверьте')]")
-        text_error_login.is_displayed()
