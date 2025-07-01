@@ -3,42 +3,41 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import selenium, pytest
+from faker import Faker
 
-LINK = 'https://store.steampowered.com/'
 
-
-@pytest.mark.usefixtures('browser')
 class TestSteamPage:
     TIMEOUT = 5
+    LINK = 'https://store.steampowered.com/'
 
-    LOGIN_BUTTON = (By.XPATH, "//a[text()='войти']")
-    LOGIN_TEXT = (By.XPATH, "//div[text()='Вход']")
+    LOGIN_BUTTON = (By.XPATH, "//a[@class='global_action_link']")
+    LOGIN_TEXT = (By.XPATH, "//div[@class='page_content']//form")
     LOGIN_USERNAME_INPUT = (By.XPATH,
-                            "//div[contains(text(), 'Войдите')]//following-sibling::input[@type='text']")
+                            "//div[@class='page_content']//input[@type='text']")
     LOGIN_PASSWORD_INPUT = (By.XPATH,
-                            "//div[contains(text(), 'Пароль')]//following-sibling::input[@type='password']")
+                            "//div[@class='page_content']//input[@type='password']")
     LOGIN_SUBMIT_BUTTON = (By.XPATH, "//button[@type='submit']")
-    #LOGIN_ERROR_MESSAGE_DIV = (By.XPATH, "//div[contains(text(), 'проверьте')]")
-    LOGIN_ERROR_MESSAGE_DIV = (By.XPATH, "//div[@*='auth_message_incorrectcode']")
+    LOGIN_ERROR_MESSAGE_DIV = (By.XPATH, "//div[@class='page_content']//form//div[5]")
     STORE_NAV_DIV = (By.XPATH, "//div[@class='store_nav']")
 
-    def test_load_page(self, browser):
-        browser.get(LINK)
+    def test_login(self, browser):
+        browser.get(self.LINK)
         WebDriverWait(browser, self.TIMEOUT).until(EC.visibility_of_element_located(self.STORE_NAV_DIV))
 
-    def test_click_login(self, browser):
         WebDriverWait(browser, self.TIMEOUT).until(EC.element_to_be_clickable(self.LOGIN_BUTTON)).click()
 
-    def test_load_login_page(self, browser):
         WebDriverWait(browser, self.TIMEOUT).until(EC.visibility_of_element_located(self.LOGIN_TEXT))
 
-    def test_login(self, browser):
         WebDriverWait(browser, self.TIMEOUT).until(
-            EC.visibility_of_element_located(self.LOGIN_USERNAME_INPUT)).send_keys('TEST_LOGIN')
+            EC.visibility_of_element_located(self.LOGIN_USERNAME_INPUT)).send_keys(Faker().user_name())
         WebDriverWait(browser, self.TIMEOUT).until(
-            EC.visibility_of_element_located(self.LOGIN_PASSWORD_INPUT)).send_keys('TEST_PASSWORD')
+            EC.visibility_of_element_located(self.LOGIN_PASSWORD_INPUT)).send_keys(Faker().password())
         WebDriverWait(browser, self.TIMEOUT).until(
             EC.element_to_be_clickable(self.LOGIN_SUBMIT_BUTTON)).submit()
         WebDriverWait(browser, self.TIMEOUT).until(
             EC.presence_of_element_located(self.LOGIN_ERROR_MESSAGE_DIV))
 
+        WebDriverWait(browser, self.TIMEOUT).until(
+            EC.text_to_be_present_in_element(locator=self.LOGIN_ERROR_MESSAGE_DIV,
+                                             text_="Пожалуйста, проверьте свой пароль и имя аккаунта и попробуйте снова.")
+        )
